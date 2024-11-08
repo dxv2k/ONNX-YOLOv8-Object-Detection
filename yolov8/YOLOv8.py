@@ -5,6 +5,7 @@ import onnxruntime
 
 from yolov8.utils import xywh2xyxy, draw_detections, multiclass_nms
 
+INFERENCE_PROVIDER = ['CPUExecutionProvider']
 
 class YOLOv8:
 
@@ -20,7 +21,9 @@ class YOLOv8:
 
     def initialize_model(self, path):
         self.session = onnxruntime.InferenceSession(path,
-                                                    providers=onnxruntime.get_available_providers())
+            # providers=onnxruntime.get_available_providers()
+            providers=INFERENCE_PROVIDER
+        )
         # Get model info
         self.get_input_details()
         self.get_output_details()
