@@ -25,16 +25,16 @@ class YOLOv8:
         session_options = onnxruntime.SessionOptions()
 
         # Limit intra-op threads (parallelism within an operation)
-        session_options.intra_op_num_threads = 3  # Adjust based on your CPU cores
+        session_options.intra_op_num_threads = 2  # Adjust based on your CPU cores
 
         # Limit inter-op threads (parallelism between operations)
-        session_options.inter_op_num_threads = 3  # Adjust as needed
+        session_options.inter_op_num_threads = 6  # Adjust as needed
 
         # Set execution mode to sequential to reduce parallelism
         session_options.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
 
         # Set graph optimization level to basic for efficiency
-        session_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_BASIC
+        session_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
 
         # Disable memory patterns to further control resource usage
         session_options.enable_mem_pattern = True
