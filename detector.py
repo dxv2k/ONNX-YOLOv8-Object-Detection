@@ -1,5 +1,6 @@
 import dotenv
-dotenv.load_dotenv() 
+
+dotenv.load_dotenv()
 
 import cv2
 from typing import Literal, Any
@@ -8,22 +9,29 @@ import os
 import time
 import requests
 
-# NOTE: source 
+# NOTE: source
 from yolov8 import YOLOv8
 from yolov8 import utils
 
 # ----------------------------
 # Configuration Parameters
 # ----------------------------
-MODEL_PATH = "models/yolov8n.onnx"
-CONF_THRESHOLD = 0.75
+VERBOSE = True
+print("VERBOSE: ",VERBOSE)
+MODEL_PATH = "models/yolov8m.onnx"
+CONF_THRESHOLD = 0.5
 IOU_THRESHOLD = 0.5
 OUTPUT_DIR = "output"
-TARGET_CLASS_NAME = os.environ.get("TARGET_CLASS_NAME", "person") 
-DURATION_TIME_IN_SECS = int(os.environ.get("DURATION_TIME_IN_SECS", 1)) 
-SAMPLING_DURATION = int(os.environ.get("SAMPLING_DURATION", 5))   # seconds to capture frames
-SLEEP_DURATION = int(os.environ.get("SLEEP_DURATION", 2))  # seconds to sleep between cycles
-SAMPLING_RATE_FPS = int(os.environ.get("SLEEP_DURATION", 2))  # Frames per second
+
+TARGET_CLASS_NAME = os.environ.get("TARGET_CLASS_NAME", "dog")
+DURATION_TIME_IN_SECS = float(os.environ.get("DURATION_TIME_IN_SECS", 1))
+SLEEP_DURATION = float(
+    os.environ.get("SLEEP_DURATION", 1)
+)  # seconds to sleep between cycles
+SAMPLING_DURATION = int(
+    os.environ.get("SAMPLING_DURATION", 5)
+)  # seconds to capture frames
+SAMPLING_RATE_FPS = int(os.environ.get("SAMPLING_RATE_FPS", 5))  # Frames per second
 
 # Validate CLASS_NAME
 if TARGET_CLASS_NAME not in utils.class_names:
@@ -129,6 +137,14 @@ def detect_in_frames(frames) -> tuple[Literal[True], Any] | tuple[Literal[False]
             # Retrieve class name from class_id
             class_name = [detector.class_names[class_id] for class_id in class_ids]
             if TARGET_CLASS_NAME in class_name:
+                print(f"--------------ALERT DETAILS--------------")
+                print("bbox: ", boxes)
+                print("scores: ", scores)
+                print(
+                    class_ids,
+                    [detector.class_names[class_id] for class_id in class_ids],
+                )
+                print(f"--------------------------------------------")
                 return True, frame
             else:
                 print(f"--------------DETECTION RESULT--------------")
@@ -138,7 +154,7 @@ def detect_in_frames(frames) -> tuple[Literal[True], Any] | tuple[Literal[False]
                     class_ids,
                     [detector.class_names[class_id] for class_id in class_ids],
                 )
-    print(f"--------------------------------------------")
+                print(f"--------------------------------------------")
     return False, None
 
 
@@ -153,9 +169,10 @@ def main():
         while True:
             frames = []
             start_time = time.time()
-            print(
-                f"Capturing frames for {SAMPLING_DURATION} seconds at {SAMPLING_RATE_FPS} FPS..."
-            )
+            if VERBOSE:
+                print(
+                    f"Capturing frames for {SAMPLING_DURATION} seconds at {SAMPLING_RATE_FPS} FPS..."
+                )
 
             # Calculate interval between frames based on sampling rate
             frame_interval = 1 / SAMPLING_RATE_FPS  # seconds
@@ -170,7 +187,8 @@ def main():
                 # Sleep to maintain the sampling rate
                 time.sleep(frame_interval)
 
-            print(f"Captured {len(frames)} frames. Running detection...")
+            if VERBOSE:
+                print(f"Captured {len(frames)} frames. Running detection...")
 
             # Detection Phase: Run detection on all captured frames
             target_detected, detected_frame = detect_in_frames(frames)
@@ -222,7 +240,8 @@ def main():
                 detection_state.alert_sent = False
 
             # Sleep for SLEEP_DURATION seconds before the next cycle
-            print(f"Sleeping for {SLEEP_DURATION} seconds...\n")
+            if VERBOSE:
+                print(f"Sleeping for {SLEEP_DURATION} seconds...\n")
             time.sleep(SLEEP_DURATION)
 
     except KeyboardInterrupt:
