@@ -1,3 +1,6 @@
+import dotenv
+dotenv.load_dotenv()
+
 import os
 from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
 from pydantic import BaseModel
@@ -209,4 +212,8 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host=os.environ.get("ALERT_SERVER_HOST", "0.0.0.0"),
+        port=int(os.environ.get("ALERT_SERVER_PORT", 8000)),
+    )

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  tele_alert_server:
+    build: .
+    container_name: tele_alert_server
+    env_file:
+      - .env
+    devices:
+      - "/dev/video0:/dev/video0"  # Mount the webcam device
+    restart: unless-stopped
+    environment:
+      - TELE_BOT_TOKEN=${TELE_BOT_TOKEN}
+      - TELE_CHAT_ID=${TELE_CHAT_ID}
+
+    # No ports exposed externally
+    # Optional: Run in privileged mode if necessary
+    privileged: true
+
+  tele_alert_detector:
+    build: .
+    container_name: tele_alert_detector
+    env_file:
+      - .env
+    devices:
+      - "/dev/video0:/dev/video0"  # Mount the webcam device
+    restart: unless-stopped
+    environment:
+    - TARGET_CLASS_NAME="person"
+    - DURATION_TIME_IN_SECS=1
+    - SAMPLING_DURATION=5   # seconds to capture frames
+    - SLEEP_DURATION=2  # seconds to sleep between cycles
+    - SAMPLING_RATE_FPS=2  # Frames per second
+    command: ["python", "detector.py"]  # Run detector.py instead of starting FastAPI
+

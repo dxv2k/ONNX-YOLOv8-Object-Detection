@@ -1,3 +1,6 @@
+import dotenv
+dotenv.load_dotenv() 
+
 import cv2
 from typing import Literal, Any
 from datetime import datetime
@@ -5,7 +8,7 @@ import os
 import time
 import requests
 
-# Ensure 'yolov8' is correctly installed and accessible
+# NOTE: source 
 from yolov8 import YOLOv8
 from yolov8 import utils
 
@@ -16,11 +19,11 @@ MODEL_PATH = "models/yolov8n.onnx"
 CONF_THRESHOLD = 0.75
 IOU_THRESHOLD = 0.5
 OUTPUT_DIR = "output"
-TARGET_CLASS_NAME = "person"
-DURATION_TIME_IN_SECS = 1
-SAMPLING_DURATION = 5  # seconds to capture frames
-SLEEP_DURATION = 2  # seconds to sleep between cycles
-SAMPLING_RATE_FPS = 2  # Frames per second
+TARGET_CLASS_NAME = os.environ.get("TARGET_CLASS_NAME", "person") 
+DURATION_TIME_IN_SECS = int(os.environ.get("DURATION_TIME_IN_SECS", 1)) 
+SAMPLING_DURATION = int(os.environ.get("SAMPLING_DURATION", 5))   # seconds to capture frames
+SLEEP_DURATION = int(os.environ.get("SLEEP_DURATION", 2))  # seconds to sleep between cycles
+SAMPLING_RATE_FPS = int(os.environ.get("SLEEP_DURATION", 2))  # Frames per second
 
 # Validate CLASS_NAME
 if TARGET_CLASS_NAME not in utils.class_names:
