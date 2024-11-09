@@ -1,6 +1,4 @@
-
 import os
-import asyncio 
 from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
 from pydantic import BaseModel
 import telegram
@@ -15,10 +13,8 @@ app = FastAPI()
 # ----------------------------
 logging.basicConfig(
     level=logging.INFO,  # Set to INFO to capture general events
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -35,17 +31,20 @@ if not TELE_BOT_TOKEN or not USER_CHAT_ID:
 
 bot = telegram.Bot(token=TELE_BOT_TOKEN)
 
+
 # ----------------------------
 # Pydantic Models
 # ----------------------------
 class Alert(BaseModel):
     message: str
 
+
 # ----------------------------
 # Helper Functions
 # ----------------------------
 
-def compress_image(image_bytes: bytes, max_size_kb: int = 200) -> bytes:
+
+def compress_image(image_bytes: bytes, max_size_kb: int = 100) -> bytes:
     """
     Compresses the image to ensure its size is below `max_size_kb` kilobytes.
 
@@ -58,13 +57,13 @@ def compress_image(image_bytes: bytes, max_size_kb: int = 200) -> bytes:
     """
     image = Image.open(BytesIO(image_bytes))
     # Convert to JPEG if not already
-    if image.format != 'JPEG':
-        image = image.convert('RGB')
+    if image.format != "JPEG":
+        image = image.convert("RGB")
     # Initialize buffer
     buffer = BytesIO()
     # Start with high quality
     quality = 85
-    image.save(buffer, format='JPEG', quality=quality, optimize=True)
+    image.save(buffer, format="JPEG", quality=quality, optimize=True)
     compressed_image = buffer.getvalue()
     buffer.close()
 
@@ -72,11 +71,12 @@ def compress_image(image_bytes: bytes, max_size_kb: int = 200) -> bytes:
     while len(compressed_image) > max_size_kb * 1024 and quality > 10:
         buffer = BytesIO()
         quality -= 5
-        image.save(buffer, format='JPEG', quality=quality, optimize=True)
+        image.save(buffer, format="JPEG", quality=quality, optimize=True)
         compressed_image = buffer.getvalue()
         buffer.close()
 
     return compressed_image
+
 
 async def send_image_to_telegram(compressed_image: bytes, caption: str, filename: str):
     """
@@ -88,12 +88,15 @@ async def send_image_to_telegram(compressed_image: bytes, caption: str, filename
         filename (str): Original filename of the image.
     """
     try:
-        await bot.send_photo(chat_id=USER_CHAT_ID, photo=compressed_image, caption=caption)
+        await bot.send_photo(
+            chat_id=USER_CHAT_ID, photo=compressed_image, caption=caption
+        )
         logger.info(f"Image sent to Telegram: {filename} with caption: '{caption}'")
     except Exception as e:
-        logger.error(f"Error sending image to Telegram: {e}")
+        logger.error(f"Error sending image to Telegram: {e}", exc_info=True)
 
-def process_and_send_image_bytes(image_bytes: bytes, caption: str, filename: str):
+
+async def process_and_send_image_bytes(image_bytes: bytes, caption: str, filename: str):
     """
     Processes the image by compressing it and sending it to Telegram.
 
@@ -112,9 +115,10 @@ def process_and_send_image_bytes(image_bytes: bytes, caption: str, filename: str
             f"Compressed Size = {compressed_size_kb:.2f} KB"
         )
         # Send image to Telegram
-        asyncio.run(send_image_to_telegram(compressed_image, caption, filename))
+        await send_image_to_telegram(compressed_image, caption, filename)
     except Exception as e:
-        logger.error(f"Error processing image: {e}")
+        logger.error(f"Error processing image: {e}", exc_info=True)
+
 
 # ----------------------------
 # API Endpoint to Receive Text Alerts
@@ -138,6 +142,7 @@ async def send_alert(alert: Alert):
         logger.error(f"Error sending alert to Telegram: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # ----------------------------
 # API Endpoint to Receive and Send Images
 # ----------------------------
@@ -145,7 +150,7 @@ async def send_alert(alert: Alert):
 async def send_image(
     file: UploadFile = File(...),
     caption: str = "Detected Image",
-    background_tasks: BackgroundTasks = None
+    background_tasks: BackgroundTasks = None,
 ):
     """
     Endpoint to receive an image, compress it, and send it to Telegram with a caption.
@@ -167,14 +172,22 @@ async def send_image(
     try:
         image_bytes = await file.read()
     except Exception as e:
-        logger.error(f"Error reading file: {e}")
+        logger.error(f"Error reading file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error reading file.")
 
     # Add background task to process and send image
-    background_tasks.add_task(process_and_send_image_bytes, image_bytes, caption, file.filename)
+    background_tasks.add_task(
+        process_and_send_image_bytes, image_bytes, caption, file.filename
+    )
 
-    logger.info(f"Received image for sending: {file.filename} with caption: '{caption}'")
-    return {"status": "accepted", "message": "Image is being processed and will be sent shortly."}
+    logger.info(
+        f"Received image for sending: {file.filename} with caption: '{caption}'"
+    )
+    return {
+        "status": "accepted",
+        "message": "Image is being processed and will be sent shortly.",
+    }
+
 
 # ----------------------------
 # Health Check Endpoint
@@ -188,6 +201,7 @@ async def health_check():
         dict: Health status.
     """
     return {"status": "healthy"}
+
 
 # ----------------------------
 # Run the Server
