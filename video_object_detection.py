@@ -7,7 +7,7 @@ import os
 
 # Initialize YOLOv8 model
 model_path = "models/yolov8n.onnx"
-yolov8_detector = YOLOv8(model_path, conf_thres=0.5, iou_thres=0.5)
+yolov8_detector = YOLOv8(model_path, conf_thres=0.8, iou_thres=0.5)
 
 # Initialize video
 video_url = 'https://youtu.be/Snyg0RqpVxY'

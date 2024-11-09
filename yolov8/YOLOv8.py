@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import onnxruntime
 
-from yolov8.utils import xywh2xyxy, draw_detections, multiclass_nms
+from yolov8.utils import xywh2xyxy, draw_detections, multiclass_nms, class_names
 
 INFERENCE_PROVIDER = ['CPUExecutionProvider']
 
@@ -12,6 +12,7 @@ class YOLOv8:
     def __init__(self, path, conf_thres=0.7, iou_thres=0.5):
         self.conf_threshold = conf_thres
         self.iou_threshold = iou_thres
+        self.class_names = class_names
 
         # Initialize model
         self.initialize_model(path)

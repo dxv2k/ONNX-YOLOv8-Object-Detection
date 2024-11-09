@@ -4,3 +4,6 @@ imread-from-url
 cap-from-youtube
 ultralytics
 onnxruntime
+fastapi 
+uvicorn 
+pydantic   
