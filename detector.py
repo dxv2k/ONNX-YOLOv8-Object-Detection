@@ -17,9 +17,10 @@ CONF_THRESHOLD = 0.75
 IOU_THRESHOLD = 0.5
 OUTPUT_DIR = "output"
 TARGET_CLASS_NAME = "person"
-DURATION_TIME_IN_SECS = 2
-SAMPLING_DURATION = 5  # seconds to capture frames
+DURATION_TIME_IN_SECS = 1
+SAMPLING_DURATION = 10  # seconds to capture frames
 SLEEP_DURATION = 2  # seconds to sleep between cycles
+SAMPLING_RATE_FPS = 2  # Frames per second
 
 # Validate CLASS_NAME
 if TARGET_CLASS_NAME not in utils.class_names:
@@ -79,10 +80,16 @@ def detect_in_frames(frames):
     for frame in frames:
         boxes, scores, class_ids = detector(frame)
         for class_id, score in zip(class_ids, scores):
-            # class_name = detector.class_names.get(class_id, "Unknown")
+            # Retrieve class name from class_id
             class_name = [detector.class_names[class_id] for class_id in class_ids]
             if TARGET_CLASS_NAME in class_name:
                 return True
+            else: 
+                print(f"--------------DETECTION RESULT--------------")
+                print(boxes)
+                print(scores)
+                print(class_ids, [detector.class_names[class_id] for class_id in class_ids])
+    print(f"--------------------------------------------")
     return False
 
 
@@ -97,7 +104,12 @@ def main():
         while True:
             frames = []
             start_time = time.time()
-            print(f"Capturing frames for {SAMPLING_DURATION} seconds...")
+            print(
+                f"Capturing frames for {SAMPLING_DURATION} seconds at {SAMPLING_RATE_FPS} FPS..."
+            )
+
+            # Calculate interval between frames based on sampling rate
+            frame_interval = 1 / SAMPLING_RATE_FPS  # seconds
 
             # Sampling Phase: Capture frames for SAMPLING_DURATION seconds
             while (time.time() - start_time) < SAMPLING_DURATION:
@@ -106,8 +118,8 @@ def main():
                     print("Failed to grab frame")
                     continue
                 frames.append(frame)
-                # Optional: Control frame rate if necessary
-                # time.sleep(0.1)  # For example, capture at ~10 FPS
+                # Sleep to maintain the sampling rate
+                time.sleep(frame_interval)
 
             print(f"Captured {len(frames)} frames. Running detection...")
 
