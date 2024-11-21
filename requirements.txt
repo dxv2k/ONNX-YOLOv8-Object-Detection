@@ -1,4 +1,12 @@
 opencv-python
 imread-from-url
-onnxruntime-gpu
+# onnxruntime-gpu
 cap-from-youtube
+ultralytics
+onnxruntime
+fastapi 
+uvicorn 
+pydantic   
+python-multipart
+pillow
+python-dotenv

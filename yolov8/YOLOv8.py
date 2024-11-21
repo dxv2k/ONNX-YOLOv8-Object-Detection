@@ -3,14 +3,16 @@ import cv2
 import numpy as np
 import onnxruntime
 
-from yolov8.utils import xywh2xyxy, draw_detections, multiclass_nms
+from yolov8.utils import xywh2xyxy, draw_detections, multiclass_nms, class_names
 
+INFERENCE_PROVIDER = ['CPUExecutionProvider']
 
 class YOLOv8:
 
     def __init__(self, path, conf_thres=0.7, iou_thres=0.5):
         self.conf_threshold = conf_thres
         self.iou_threshold = iou_thres
+        self.class_names = class_names
 
         # Initialize model
         self.initialize_model(path)
@@ -19,8 +21,29 @@ class YOLOv8:
         return self.detect_objects(image)
 
     def initialize_model(self, path):
+        # Create SessionOptions object
+        session_options = onnxruntime.SessionOptions()
+
+        # Limit intra-op threads (parallelism within an operation)
+        session_options.intra_op_num_threads = 2  # Adjust based on your CPU cores
+
+        # Limit inter-op threads (parallelism between operations)
+        session_options.inter_op_num_threads = 6  # Adjust as needed
+
+        # Set execution mode to sequential to reduce parallelism
+        session_options.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
+
+        # Set graph optimization level to basic for efficiency
+        session_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
+
+        # Disable memory patterns to further control resource usage
+        session_options.enable_mem_pattern = True
+
         self.session = onnxruntime.InferenceSession(path,
-                                                    providers=onnxruntime.get_available_providers())
+            # providers=onnxruntime.get_available_providers()
+            providers=INFERENCE_PROVIDER, 
+            sess_options=session_options 
+        )
         # Get model info
         self.get_input_details()
         self.get_output_details()
@@ -56,7 +79,7 @@ class YOLOv8:
         start = time.perf_counter()
         outputs = self.session.run(self.output_names, {self.input_names[0]: input_tensor})
 
-        # print(f"Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
+        print(f"Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
         return outputs
 
     def process_output(self, output):
